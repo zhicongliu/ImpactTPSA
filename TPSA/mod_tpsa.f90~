@@ -791,6 +791,7 @@ contains
       integer :: i,j,k,m
       
       nPtc = size(ptc,2)
+      print*, nPtc
       do k = 1,nPtc
         ptcTemp=0.d0
         do j = 1,6

@@ -376,22 +376,21 @@
           flagcoll = 0
         endif
 
+        call phase_Output(101,Bpts,1)
 !-------------------------------------------------------------------
 ! start looping through 'Nblem' beam line elements.
         tmpfile = 0
         bitypeold = 0
         blengthold = 0.0d0
         zbleng = zblengend
-          Flagmap = 2
-          if(Flagmap == 2) then
-            call dctps_Initialize(6,5)
-            do j=1,6            
-              call assign(tpsaPtc(j),0.d0,j)
-            enddo
-          endif
-        !do i=1,6
-        !  write(*,*) tpsaPtc(i)%map(2),tpsaPtc(i)%map(3),tpsaPtc(i)%map(4),tpsaPtc(i)%map(5),tpsaPtc(i)%map(6),tpsaPtc(i)%map(7)
-        !enddo        
+        
+        if(Flagmap == 92) then
+          call dctps_Initialize(6,5)
+          do j=1,6            
+            call assign(tpsaPtc(j),0.d0,j)
+          enddo
+        endif
+        
         do i = iend+1, Nblem
           call getparam_BeamLineElem(Blnelem(i),blength,bnseg,bmpstp,&
                                      bitype)
@@ -429,7 +428,7 @@
               if(Flagmap.eq.1) then
                 call map1_BeamBunch(Bpts,Blnelem(i),z,tau1,bitype,&
                                     bnseg,j,ihlf)
-              else if(Flagmap.eq.2) then
+              else if(Flagmap.eq.92) then
                 call map1_BeamBunch(Bpts,Blnelem(i),z,tau1,bitype,&
                                     bnseg,j,ihlf,tpsaPtc)
               else
@@ -461,7 +460,7 @@
               if(Flagmap.eq.1) then
                 call map1_BeamBunch(Bpts,Blnelem(i),z,tau1,bitype,&
                                     bnseg,j,ihlf)
-              else if(Flagmap.eq.2) then
+              else if(Flagmap.eq.92) then
                 call map1_BeamBunch(Bpts,Blnelem(i),z,tau1,bitype,&
                                     bnseg,j,ihlf,tpsaPtc)
               else
@@ -474,14 +473,17 @@
               print*,"j, nstep, z",j,nstep,z
             endif
           end do
-          call diagnostic1_Output(z,Bpts,nchrg,nptlist0)
+          if (Flagmap.ne.92) call diagnostic1_Output(z,Bpts,nchrg,nptlist0)
           zbleng = zbleng + blength
         enddo
 
-        do i=1,6
-          write(*,*) tpsaPtc(i)%map(2),tpsaPtc(i)%map(3),tpsaPtc(i)%map(4),tpsaPtc(i)%map(5),tpsaPtc(i)%map(6),tpsaPtc(i)%map(7)
-        enddo        
-        call tpsaPtc(1)%output()
+        if(Flagmap == 92) then
+          do i=1,6
+            write(*,*) tpsaPtc(i)%map(2),tpsaPtc(i)%map(3),tpsaPtc(i)%map(4),tpsaPtc(i)%map(5),tpsaPtc(i)%map(6),tpsaPtc(i)%map(7)
+          enddo        
+          call pushPtc_TPSA(Bpts%Pts1,tpsaPtc)
+        endif
+        !call tpsaPtc(1)%output()
         !call tpsaPtc(2)%output()
         !call tpsaPtc(5)%output()
         !call tpsaPtc(6)%output()
@@ -489,7 +491,7 @@
 ! final output.
         call MPI_BARRIER(comm2d,ierr)
         !output all particles in 6d phase space.
-        !call phase_Output(100,Bpts,1)
+        call phase_Output(102,Bpts,1)
         t_integ = t_integ + elapsedtime_Timer(t0)
         call showtime_Timer()
 
