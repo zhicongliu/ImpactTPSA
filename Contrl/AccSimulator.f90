@@ -318,7 +318,7 @@
         double precision, dimension(10) :: dparam
         real*8 :: tmpgamlc,tmpgamgl
         real*8, dimension(2) :: tmp56lc,tmp56gl
-        real*8 :: tmppx,tmppy,tmppt,tmph
+        real*8 :: tmppx,tmppy,tmppt,tmph,ksext
         
         type (dctps) ,dimension(6) :: tpsaPtc
 
@@ -330,7 +330,6 @@
         call getsize_Pgrid2d(grid2d,totnp,npy,npx)
 
         call MPI_BARRIER(comm2d,ierr)
-        call starttime_Timer(t0)
 
         !get local particle number and mesh number on each processor.
         call getnpt_BeamBunch(Bpts,Nplocal)
@@ -384,8 +383,9 @@
         blengthold = 0.0d0
         zbleng = zblengend
         
+        call starttime_Timer(t0)
         if(Flagmap == 92) then
-          call dctps_Initialize(6,5)
+          call dctps_Initialize(6,7)
           do j=1,6            
             call assign(tpsaPtc(j),0.d0,j)
           enddo
@@ -473,6 +473,20 @@
               print*,"j, nstep, z",j,nstep,z
             endif
           end do
+
+!-------------sextupole-------------
+          if(mod(i,4) == 0) then
+            if(Flagmap.eq.1) then
+              gam = -Bpts%refptcl(6)
+              ksext =1.0
+              call sextupole_BeamBunch(Bpts%Pts1,ksext,sqrt(gam**2-1.0),Scxl)
+            else if(Flagmap.eq.92) then
+              gam = -Bpts%refptcl(6)
+              ksext =1.0
+              call sextupole_BeamBunch(tpsaPtc  ,ksext,sqrt(gam**2-1.0),Scxl)
+            endif
+          endif
+
           if (Flagmap.ne.92) call diagnostic1_Output(z,Bpts,nchrg,nptlist0)
           zbleng = zbleng + blength
         enddo
@@ -481,18 +495,18 @@
           do i=1,6
             write(*,*) tpsaPtc(i)%map(2),tpsaPtc(i)%map(3),tpsaPtc(i)%map(4),tpsaPtc(i)%map(5),tpsaPtc(i)%map(6),tpsaPtc(i)%map(7)
           enddo        
+          call tpsaPtc(1)%output()
           call pushPtc_TPSA(Bpts%Pts1,tpsaPtc)
         endif
-        !call tpsaPtc(1)%output()
         !call tpsaPtc(2)%output()
         !call tpsaPtc(5)%output()
         !call tpsaPtc(6)%output()
 
+        t_integ = t_integ + elapsedtime_Timer(t0)
 ! final output.
         call MPI_BARRIER(comm2d,ierr)
         !output all particles in 6d phase space.
         call phase_Output(102,Bpts,1)
-        t_integ = t_integ + elapsedtime_Timer(t0)
         call showtime_Timer()
 
         !final output line density and uncorrelated energy spread

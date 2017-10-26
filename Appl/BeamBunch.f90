@@ -36,6 +36,9 @@
         interface map1_BeamBunch
           module procedure drift1_BeamBunch,tpsaMap_BeamBunch
         end interface
+        interface sextupole_BeamBunch
+          module procedure sextupole_Ptc_BeamBunch,sextupole_tpsa_BeamBunch
+        end interface
       contains
         subroutine construct_BeamBunch(this,incurr,inkin,inmass,incharge,innp,&
                                        phasini)
@@ -226,6 +229,43 @@
         t_map1 = t_map1 + elapsedtime_Timer(t0)
 
         end subroutine tpsaMap_BeamBunch
+
+
+        subroutine sextupole_Ptc_BeamBunch(ptc,ksext,gambet,scxl)
+        implicit none        
+        double precision, dimension(:,:), intent(inout) :: ptc
+        double precision, intent(in)   :: ksext, gambet,scxl
+        double precision :: scxl2,factor
+        integer :: i,nPtc
+
+        nPtc = size(ptc,2)
+
+        scxl2=scxl*scxl
+        factor = 1.0*gambet * ksext/2.0 * scxl2
+
+        do i = 1, nPtc
+          ptc(2,i) = ptc(2,i) - (ptc(1,i)**2 - ptc(3,i)**2) * factor
+          ptc(4,i) = ptc(4,i) - (ptc(1,i)    * ptc(3,i)   ) * factor
+        enddo
+
+        end subroutine sextupole_Ptc_BeamBunch
+
+
+        subroutine sextupole_tpsa_BeamBunch(ptc,ksext,gambet,scxl)
+        implicit none        
+        type (dctps), dimension(6) , intent(inout) ::ptc
+        double precision, intent(in)   :: ksext, gambet,scxl
+        double precision :: scxl2,factor
+        integer :: i,nPtc
+
+
+        scxl2=scxl*scxl
+        factor = 1.0*gambet * ksext/2.0 * scxl2
+
+          ptc(2) = ptc(2) - (ptc(1)*ptc(1) - ptc(3)*ptc(3)) * factor
+          ptc(4) = ptc(4) - (ptc(1)    * ptc(3)   ) * factor
+        end subroutine sextupole_tpsa_BeamBunch
+
 
         !from z to t beam frame 0th order transformation.
         subroutine conv0thB_BeamBunch(this,tau,nplc,nptot,ptrange,&
